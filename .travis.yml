@@ -1,0 +1,36 @@
+sudo: required
+dist: trusty
+env:
+  - BUILD_IMAGE=xenial
+  - BUILD_IMAGE=trusty
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - mkdir -p build/deb/trusty build/deb/xenial build/rpm/CentOS/7/x86_64
+
+script:
+  - docker-compose run $BUILD_IMAGE
+  - mv *xenial*.deb build/deb/xenial || true
+  - mv *trusty*.deb build/deb/trusty || true
+
+deploy:
+  provider: s3
+  access_key_id: AKIAJ5QCEUQ2WVNY7GDA
+  bucket: travis-packages.erianna.com
+  detect_encoding: true
+  skip_cleanup: true
+  acl: public_read
+  region: us-west-2
+  local_dir: build
+  on:
+    all_branches: true
+    repo: charlesportwoodii/libgpgerror-build
+  secret_access_key:
+    secure: lhq7TGbWDZstMpEl7gj2PoMVrlJc9uei/k4vuH1U5ixqqPxXiWwnc2AsWyRJYRfuX2US0l4yTHbniAsYuPogz8EdG9r5wad0EU3LPbc8lQesvsVSX3YlhtpHmcUjFZl21i1TpeZw1hYBN+24D33Lm8jMoUH0CZTmz4FidVnH/DPDg+WXTLZxuyBlM0Pvd/0DDdDUEuSSt4vH5ndm4h9VVk7AkMuags0AWcxm0jvx26r/dIVX5AEKEdZJnfMMjDRT6vJjAujE+/H7KN1hirMM0zEW9jxWhpB6ZVK3Pa+rX/yeAlH7yrUa0vGgYYd0rg2ZeMqUIKYd56yT592u0iF0Yfr22O7fpLj/rJBrvjJex2wgS8aFnhiX7Y+AeqeQwqZZnEB3eD1nlMVhhqDKNTvL3VDgADV+OD0hMOH7El6eIfr2Q3x/n2DhYrkjkyP/1+bq4EEqm18yhVpRofTWHTtV4HJg1U9DDbHYZV+u9t2wgpTGKBpChD6DD+cipPW3M8iZCySlL8cEqna/crozJkdSD8M3/1TocSzEgy6bvzAHtOxn934ji4iEbfDr9arXA0buyBmx2nKab4sbk9e4/kZJokl2nf+KUEIQoHtbdUh+WZNpMUjniaBRVAMVX1HpYLbXkyfARA4wGJoDPCxDE6t9F8XGAoGsr+e55KBhEd6m+Sg=
